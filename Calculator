@@ -1,152 +1,117 @@
-var gradeArr = []
-//var elementArrId = [92, 97, 102, 107, 112, 117, 127]
-var classLevelElementIdArr = [90, 95, 100, 105, 110, 115, 125]
-var classLevels = []
+    var gradeArr = []
+    //var elementArrId = [92, 97, 102, 107, 112, 117, 127]
+    var classLevelElementIdArr = [90, 95, 100, 105, 110, 115, 125]
+    var classLevels = []
 
-function start() {
-    //function to be called to run the script(for user reasons)
-    getGrade()
-}
+    function start() {
+        //function to be called to run the script(for user reasons)
+        getGrade()
+    }
 
-// scan page for grade numbers and add them to the gradeArr
-var getGrade = _=> {
-    for (i = 1; i < document.getElementsByTagName("table")[2].rows.length--; i++) {
-        let e = document.getElementsByTagName("table")[2].rows[i].children[3].innerHTML.split("<")[1].split(">")[1].split(" ")[0]
-        if (e !== "") {
-            gradeArr.push(e)
-        } else {
-            console.info("Removed empty string from array")
+    // scan page for grade numbers and add them to the gradeArr
+    var getGrade = _=> {
+        for (i = 1; i < document.getElementsByTagName("table")[2].rows.length--; i++) {
+            let e = document.getElementsByTagName("table")[2].rows[i].children[3].innerHTML.split("<")[1].split(">")[1].split(" ")[0]
+            if (e !== "") {
+                gradeArr.push(e)
+                console.log('Found ' + e)
+            } else {
+                console.info("Removed empty string from array")
+            }
+        }
+        /* if we have found all the grade percentages */
+        if (gradeArr.length === 7) {
+            getClassLevel()
         }
     }
-    /* if we have found all the grade percentages */
-    if (gradeArr.length === 7) {
-        getClassLevel()
-    }
-}
-//find out which classes are honors ap etc
-var getClassLevel = _=> {
-    //for every class taken
-    for (e = 0; e < classLevelElementIdArr.length; e++) {
-        //get an array of the class name
-        let classArr = document.getElementsByClassName("expandable-row")[classLevelElementIdArr[e]].innerHTML.split(" ")/*typeof should be arr*/
-        //sift the array for the keywords "AP" and "Honors"
-        var ap = classArr.find(Element => Element === "AP")
-        var honors = classArr.find(Element => Element === "HONORS")
-        if(ap === "AP") {
-            classLevels.push("AP")
-        } else if (honors === "HONORS") {
-            classLevels.push("HONORS")
-        } else {
-            classLevels.push("CP")
+    //find out which classes are honors ap etc
+    var getClassLevel = _=> {
+        //for every class taken
+        for (e = 0; e < classLevelElementIdArr.length; e++) {
+            //get an array of the class name
+            let classArr = document.getElementsByClassName("expandable-row")[classLevelElementIdArr[e]].innerHTML.split(" ")/*typeof should be arr*/
+            //sift the array for the keywords "AP" and "Honors"
+            var ap = classArr.find(Element => Element === "AP")
+            var honors = classArr.find(Element => Element === "HONORS")
+            if(ap === "AP") {
+                classLevels.push("AP")
+            } else if (honors === "HONORS") {
+                classLevels.push("HONORS")
+            } else {
+                classLevels.push("CP")
+            }
+        }
+        if (gradeArr.length === classLevels.length) {
+            calcAdditiveGpa()
         }
     }
-    if (gradeArr.length === classLevels.length) {
-        calcAdditiveGpa()
+    var grade_points = {
+        "A": 4.00,
+        "A-": 3.80,
+        "B+": 3.20,
+        "B": 3.00,
+        "B-": 2.80,
+        "C+": 2.20,
+        "C": 2.00,
+        "C-": 1.80,
+        "D+": 1.20,
+        "D": 1.0,
+        "D-": 0.80,
+        "F": 0.00
     }
-}
+    var scaling_factors = {
+        "AP": 1.2,
+        "HONORS": 1.1,
+        "CP": 1
+    }
 
-var calcAdditiveGpa = _=> {
-    let additiveGPA = 0
-    for (a = 0; a < gradeArr.length; a++) {
-        let gradePercent = Math.round(gradeArr[a])
-        console.log(gradePercent)
-        let classLvl = classLevels[a]
+    var calcAdditiveGpa = _=> {
+        let additiveGPA = 0
+        for (a = 0; a < gradeArr.length; a++) {
+            let gradePercent = gradeArr[a]
+            let classLvl = classLevels[a]
 
-        if (92 <= gradePercent <= 100) { //4.0+
-            if (classLvl === "AP") {
-                additiveGPA += 4.8
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 4.4
-            } else if (classLvl === "CP") {
-                additiveGPA += 4
+            if (gradePercent >= 92) { //4.0+
+                var points = grade_points['A']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 90) { //3.8-4.56
+                var points = grade_points['A-']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 88) { //3.2-3.84
+                var points = grade_points['B+']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 82) { //3-3.6
+                var points = grade_points['B']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 80) { //2.8-3.36
+                var points = grade_points['B-']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 78) { //2.2-2.64
+                var points = grade_points['C+']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 72) { //2-2.4
+                var points = grade_points['C']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 70) { //1.8-2.16
+                var points = grade_points['C-']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 68) { //1.2-1.44
+                var points = grade_points['D+']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 62) { //1-1.2
+                var points = grade_points['D']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent >= 60) { //0.8-0.96
+                var points = grade_points['D-']
+                additiveGPA += Math.round(((points * scaling_factors[classLvl]) * 100 )/ 100)
+            } else if (gradePercent < 60) {//F
+                var points = grade_points['F']
+                additiveGPA += 0
             }
-        } else if (90 <= gradePercent <= 91) { //3.8-4.56
-            if (classLvl === "AP") {
-                additiveGPA += 4.56
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 4.18
-            } else if (classLvl === "CP") {
-                additiveGPA += 3.8
-            }
-        } else if (88 <= gradePercent <= 89) { //3.2-3.84
-            if (classLvl === "AP") {
-                additiveGPA += 3.84
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 3.52
-            } else if (classLvl === "CP") {
-                additiveGPA += 3.2
-            }
-        } else if (82 <= gradePercent <= 87) { //3-3.6
-            if (classLvl === "AP") {
-                additiveGPA += 3.6
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 3.3
-            } else if (classLvl === "CP") {
-                additiveGPA += 3
-            }
-        } else if (80 <= gradePercent <= 81) { //2.8-3.36
-            if (classLvl === "AP") {
-                additiveGPA += 3.36
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 3.08
-            } else if (classLvl === "CP") {
-                additiveGPA += 2.8
-            }
-        } else if (78 <= gradePercent <= 79) { //2.2-2.64
-            if (classLvl === "AP") {
-                additiveGPA += 2.64
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 2.42
-            } else if (classLvl === "CP") {
-                additiveGPA +=2.2
-            }
-        } else if (72 <= gradePercent <= 77) { //2-2.4
-            if (classLvl === "AP") {
-                additiveGPA += 2.4
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 2.2
-            } else if (classLvl === "CP") {
-                additiveGPA += 2
-            }
-        } else if (70 <= gradePercent <= 71) { //1.8-2.16
-            if (classLvl === "AP") {
-                additiveGPA += 2.16
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 1.98
-            } else if (classLvl === "CP") {
-                additiveGPA += 1.8
-            }
-        } else if (68 <= gradePercent <= 69) { //1.2-1.44
-            if (classLvl === "AP") {
-                additiveGPA += 1.44
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 1.32
-            } else if (classLvl === "CP") {
-                additiveGPA += 1.2
-            }
-        } else if (62 <= gradePercent <= 67) { //1-1.2
-            if (classLvl === "AP") {
-                additiveGPA += 1.2
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 1.1
-            } else if (classLvl === "CP") {
-                additiveGPA += 1
-            }
-        } else if (60 <= gradePercent <= 61) { //0.8-0.96
-            if (classLvl === "AP") {
-                additiveGPA += 0.96
-            } else if (classLvl === "HONORS") {
-                additiveGPA += 0.88
-            } else if (classLvl === "CP") {
-                additiveGPA += 0.8
-            }
-        } else if (gradePercent <= 59) {//F
-            additiveGPA += 0
+            //console.log(a)
         }
-        //console.log(a)
+        console.log("Additive GPA: " + additiveGPA)
+        console.log("Number of classes taken: " + gradeArr.length)
+        console.log("Final GPA: " + Math.round(additiveGPA/gradeArr.length * 100)/100)
+        return
     }
-    console.log("Additive GPA: " + additiveGPA)
-    console.log("Number of classes taken: " + gradeArr.length)
-    console.log("Final GPA: " + additiveGPA/gradeArr.length)
-    return
-}
